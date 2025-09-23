@@ -1,0 +1,30 @@
+services:
+  db:
+    image: gvenzl/oracle-xe:21-slim
+    container_name: oracle-xe
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: Admin123
+      APP_USER: ${ORACLE_USER:-LIBRARY}
+      APP_USER_PASSWORD: ${ORACLE_PASSWORD:-librarypwd}
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+
+  api:
+    build:
+      context: .
+    container_name: fastapi-app
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app/app
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_started
+    command: bash -lc "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+volumes:
+  oracle-data:
